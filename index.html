@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>금리와 소비 시뮬레이터</title>
+  <style>
+    :root { --navy:#143960; --blue:#2877d4; --orange:#ea8423; --ink:#18263b; --muted:#63738a; --line:#dce6f1; --bg:#f5f8fc; }
+    * { box-sizing:border-box; } body { margin:0; color:var(--ink); background:var(--bg); font-family:Pretendard,"Noto Sans KR",Arial,sans-serif; }
+    header { padding:54px 24px 48px; text-align:center; color:white; background:linear-gradient(120deg,#102e50,#2464a2); } h1 { margin:0; font-size:clamp(2rem,5vw,3.3rem); letter-spacing:-.055em; }
+    header p { max-width:620px; margin:15px auto 0; color:#dfedfb; line-height:1.65; } main { max-width:960px; margin:0 auto; padding:28px 20px 54px; }
+    .card { background:white; border:1px solid var(--line); border-radius:18px; padding:26px; box-shadow:0 8px 24px rgba(24,57,96,.05); } .intro { text-align:center; margin-bottom:20px; } .intro h2 { margin:0 0 7px; font-size:1.3rem; } .intro p { margin:0; color:var(--muted); }
+    .slider { max-width:640px; margin:24px auto 2px; text-align:center; } .rate { color:var(--blue); font-size:2.5rem; font-weight:800; font-variant-numeric:tabular-nums; } input { width:100%; accent-color:var(--blue); cursor:pointer; } .scale { display:flex; justify-content:space-between; color:var(--muted); font-size:.82rem; }
+    .answer { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:26px; } .city { border:1px solid var(--line); border-top:5px solid var(--blue); border-radius:14px; padding:20px; } .city.a { border-top-color:var(--orange); } .city h3 { margin:0; font-size:1.08rem; } .city p { margin:5px 0 17px; color:var(--muted); font-size:.87rem; }
+    .big { font-size:2rem; color:var(--blue); font-weight:800; letter-spacing:-.04em; font-variant-numeric:tabular-nums; } .a .big { color:var(--orange); } .label { font-size:.82rem; color:var(--muted); } .stats { display:flex; gap:22px; margin-top:15px; padding-top:14px; border-top:1px solid var(--line); } .stats b { display:block; font-size:1.05rem; }
+    .chart-card { margin-top:20px; } .chart-title { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:10px; } .chart-title h2 { margin:0; font-size:1.15rem; } .legend { color:var(--muted); font-size:.82rem; } .dot { display:inline-block; width:9px; height:9px; border-radius:99px; margin:0 4px 0 10px; background:var(--orange); } .dot:first-child { margin-left:0; } .dot.b { background:var(--blue); } canvas { display:block; width:100%; height:255px; }
+    .why { margin-top:20px; padding:20px 22px; border-radius:14px; background:#eef6ff; } .why h2 { margin:0 0 10px; font-size:1.05rem; } .why p { margin:0; color:#405773; line-height:1.7; font-size:.93rem; }
+    details { margin-top:20px; color:var(--muted); font-size:.86rem; } summary { cursor:pointer; font-weight:700; color:#40516b; } ul { margin:10px 0 0; padding-left:19px; line-height:1.75; } a { color:#1769c2; } footer { margin-top:22px; text-align:center; color:var(--muted); font-size:.78rem; }
+    @media (max-width:600px) { .answer { grid-template-columns:1fr; } .card { padding:20px; } .chart-title { align-items:flex-start; flex-direction:column; gap:4px; } }
+  </style>
+</head>
+<body>
+  <header><h1>금리가 바뀌면 소비는?</h1><p>금리 변화에 따라 A시(조건부 지원)와 B시(무조건 지급)의 경제효과를 간단히 비교해 보세요.</p></header>
+  <main>
+    <section class="card">
+      <div class="intro"><h2>실질금리를 움직여 보세요</h2><p>아래 결과는 예산 100억 원을 같은 조건에서 집행했을 때의 가정 시뮬레이션입니다.</p></div>
+      <div class="slider"><div class="rate" id="rateText">3.0%</div><input id="rate" type="range" min="1" max="10" step="0.1" value="3" aria-label="실질금리"><div class="scale"><span>1%</span><span>10%</span></div></div>
+      <div class="answer">
+        <article class="city a"><h3>A시 · 조건부/선별 지원</h3><p>서류·사용처 제약이 있는 지원</p><span class="label">경제에 새로 만들어지는 금액</span><div class="big" id="aY">—</div><div class="stats"><div><span class="label">소비성향(MPC)</span><b id="aMpc">—</b></div><div><span class="label">승수효과</span><b id="aK">—</b></div></div></article>
+        <article class="city"><h3>B시 · 무조건 지급</h3><p>사용 제약이 없는 기본소득</p><span class="label">경제에 새로 만들어지는 금액</span><div class="big" id="bY">—</div><div class="stats"><div><span class="label">소비성향(MPC)</span><b id="bMpc">—</b></div><div><span class="label">승수효과</span><b id="bK">—</b></div></div></article>
+      </div>
+    </section>
+    <section class="card chart-card"><div class="chart-title"><h2>금리별 최종 경제효과</h2><span class="legend"><i class="dot"></i>A시 <i class="dot b"></i>B시</span></div><canvas id="chart" width="900" height="255" aria-label="금리별 A시와 B시 경제효과 그래프"></canvas></section>
+    <section class="why"><h2>이 계산은 무엇을 뜻하나요?</h2><p>사람이 지금 쓸 돈과 나중에 쓸 돈을 고르는 경제학 모형을 사용했습니다. A시는 소비 제약 15%와 행정·누수율 15%, B시는 행정·누수율 1%를 가정했습니다. 따라서 이 결과는 실제 정책의 승패를 증명하는 값이 아니라, <strong>같은 가정을 넣었을 때의 비교</strong>입니다.</p></section>
+    <details><summary>계산식과 참고자료 보기</summary><ul><li>기초 소비성향: <strong>MPC = 1 / [1 + β<sup>ψ</sup>(1+r)<sup>ψ−1</sup>]</strong> (β=0.96, ψ=0.5)</li><li>A시 MPC = 기초 MPC × (1−0.15), 승수 = 1/(1−MPC)</li><li>최종 경제효과 = 승수 × 예산 × (1−행정·누수율)</li><li><a href="https://oll.libertyfund.org/titles/fisher-theory-of-interest" target="_blank" rel="noopener">Irving Fisher, The Theory of Interest (1930)</a></li><li><a href="https://doi.org/10.1086/260724" target="_blank" rel="noopener">Robert E. Hall (1978), Journal of Political Economy</a></li><li><a href="https://ecos.bok.or.kr/" target="_blank" rel="noopener">한국은행 ECOS 경제통계시스템</a></li></ul></details>
+    <footer>참고: 이 식은 ψ=0.5일 때 금리가 오르면 MPC가 아주 조금 높아지는 결과를 냅니다. 실제 소비는 소득·부채·자산 등 더 많은 요인의 영향을 받습니다.</footer>
+  </main>
+  <script>
+    const rate = document.getElementById('rate'), chart = document.getElementById('chart');
+    const calc = r => { const base=1/(1+Math.pow(.96,.5)*Math.pow(1+r,-.5)), a=base*.85, b=base, ka=1/(1-a), kb=1/(1-b); return {a,b,ka,kb,ay:ka*85,by:kb*99}; };
+    const won = x => `${x.toLocaleString('ko-KR',{maximumFractionDigits:1})}억 원`;
+    function draw() { const box=chart.getBoundingClientRect(),dpr=devicePixelRatio||1,w=box.width,h=255;chart.width=w*dpr;chart.height=h*dpr;const c=chart.getContext('2d');c.scale(dpr,dpr);const pad={l:50,r:14,t:18,b:31},data=Array.from({length:91},(_,i)=>({r:1+i/10,...calc((1+i/10)/100)})),max=Math.ceil(Math.max(...data.map(x=>x.by))/20)*20,x=n=>pad.l+(n-1)/9*(w-pad.l-pad.r),y=n=>h-pad.b-n/max*(h-pad.t-pad.b);c.font='12px Arial';c.strokeStyle='#e1e9f2';c.fillStyle='#718096';for(let i=0;i<4;i++){let v=max*i/3,yy=y(v);c.beginPath();c.moveTo(pad.l,yy);c.lineTo(w-pad.r,yy);c.stroke();c.fillText(`${Math.round(v)}억`,2,yy+4);}[1,3,5,7,10].forEach(v=>c.fillText(`${v}%`,x(v)-7,h-10));[['ay','#ea8423'],['by','#2877d4']].forEach(([key,color])=>{c.beginPath();data.forEach((p,i)=>i?c.lineTo(x(p.r),y(p[key])):c.moveTo(x(p.r),y(p[key])));c.strokeStyle=color;c.lineWidth=3;c.stroke();}); }
+    function update(){const r=Number(rate.value)/100,z=calc(r);document.getElementById('rateText').textContent=`${rate.value}%`;document.getElementById('aY').textContent=won(z.ay);document.getElementById('bY').textContent=won(z.by);document.getElementById('aMpc').textContent=z.a.toFixed(3);document.getElementById('bMpc').textContent=z.b.toFixed(3);document.getElementById('aK').textContent=`${z.ka.toFixed(2)}배`;document.getElementById('bK').textContent=`${z.kb.toFixed(2)}배`;draw();}
+    rate.addEventListener('input',update); addEventListener('resize',update); update();
+  </script>
+</body>
+</html>
